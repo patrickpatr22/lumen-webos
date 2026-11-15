@@ -1,0 +1,8 @@
+dist/
+*/cache/
+installer/*.exe
+installer/*.res
+tvclean/state/
+tests/tvclean/work/
+__pycache__/
+node_modules/

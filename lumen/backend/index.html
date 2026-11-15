@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lumen · Web-Backend</title>
+<style>
+  :root { --bg: #0b0d14; --card: #161a25; --line: rgba(255,255,255,.08); --t2: rgba(255,255,255,.62); --t3: rgba(255,255,255,.4); --acc: #8ab4ff; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: radial-gradient(900px 500px at 70% -10%, rgba(91,61,245,.22), transparent 70%), var(--bg); color: #fff;
+    font: 16px/1.45 -apple-system, "Segoe UI", Inter, Roboto, Arial, sans-serif; min-height: 100vh; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 20px 60px; }
+  header { display: flex; align-items: center; gap: 16px; margin-bottom: 26px; }
+  header svg { width: 56px; height: 56px; flex: 0 0 56px; }
+  h1 { margin: 0; font-size: 26px; letter-spacing: -.3px; }
+  .sub { color: var(--t2); font-size: 14px; }
+  .status { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 30px; }
+  .stat { background: var(--card); border-radius: 18px; padding: 14px 18px; box-shadow: inset 0 0 0 1px var(--line); }
+  .stat b { display: block; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--t3); }
+  .stat span { font-size: 17px; font-weight: 600; }
+  h2 { font-size: 15px; letter-spacing: .1em; text-transform: uppercase; color: var(--t3); margin: 0 0 12px 4px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
+  .app { background: var(--card); border-radius: 22px; overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
+  .thumb { aspect-ratio: 16 / 9; background: #0f121a center / cover no-repeat; position: relative; display: grid; place-items: center; }
+  .thumb img.ico { width: 34%; height: auto; max-height: 60%; object-fit: contain; }
+  .thumb .letter { font-size: 64px; font-weight: 700; color: rgba(255,255,255,.9); }
+  .thumb .src { position: absolute; left: 10px; bottom: 10px; padding: 3px 10px; border-radius: 99px; background: rgba(0,0,0,.6); font-size: 12px; font-weight: 600; }
+  .head { display: flex; align-items: center; gap: 10px; padding: 12px 14px 4px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; flex: 0 0 12px; background: #556; }
+  .name { flex: 1; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .field { display: flex; align-items: center; gap: 10px; padding: 6px 14px; font-size: 14px; color: var(--t2); }
+  .field span { flex: 0 0 118px; }
+  .field select, .field input[type=text] { flex: 1; min-width: 0; background: #0f121a; color: #fff; border: 0; border-radius: 10px; padding: 7px 10px;
+    font: inherit; box-shadow: inset 0 0 0 1px var(--line); }
+  .btns { display: flex; gap: 8px; padding: 8px 14px 14px; flex-wrap: wrap; }
+  button, label.btn { border: 0; border-radius: 99px; padding: 7px 14px; font: 600 13px inherit; font-family: inherit; cursor: pointer; background: rgba(138,180,255,.16); color: #d6e4ff; }
+  button.del { background: rgba(255,120,120,.12); color: #ffb3b3; }
+  label.btn input { display: none; }
+  .note { color: var(--t3); font-size: 14px; margin-top: 28px; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #262b3a; padding: 10px 20px; border-radius: 99px; opacity: 0; transition: opacity .25s; }
+  .toast.on { opacity: 1; }
+  .bgs { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-bottom: 8px; }
+  .bg { position: relative; border-radius: 18px; overflow: hidden; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); cursor: pointer; }
+  .bg .sw { aspect-ratio: 16 / 9; background: #0f121a center / cover no-repeat; }
+  .bg .cap { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; font-size: 14px; font-weight: 600; }
+  .bg .cap span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bg.on { box-shadow: 0 0 0 3px #8ab4ff; }
+  .bg.on .cap::after { content: 'aktiv'; color: #8ab4ff; font-size: 12px; }
+  .bg button.del { padding: 4px 10px; font-size: 12px; }
+  .bg.accent .sw { background: radial-gradient(60% 80% at 30% 30%, #e62117aa, transparent 70%), radial-gradient(60% 80% at 75% 70%, #1db954aa, transparent 70%), #0d0f16; }
+  .bg .sw.bgd-aurora { background: radial-gradient(60% 55% at 16% 8%, rgba(40, 220, 170, 0.62), rgba(40, 220, 170, 0) 70%), radial-gradient(55% 60% at 84% 18%, rgba(130, 90, 255, 0.58), rgba(130, 90, 255, 0) 70%), radial-gradient(70% 45% at 50% 0%, rgba(80, 200, 255, 0.22), rgba(80, 200, 255, 0) 70%), linear-gradient(180deg, #0a1a24, #05070d); }
+  .bg .sw.bgd-deepsea { background: radial-gradient(90% 60% at 50% -10%, rgba(110, 210, 255, 0.5), rgba(110, 210, 255, 0) 70%), radial-gradient(50% 60% at 10% 60%, rgba(0, 160, 170, 0.3), rgba(0, 160, 170, 0) 70%), linear-gradient(180deg, #0d3a55 0%, #072238 45%, #030b14 100%); }
+  .bg .sw.bgd-sunset { background: radial-gradient(70% 55% at 78% 46%, rgba(255, 140, 60, 0.62), rgba(255, 140, 60, 0) 70%), radial-gradient(55% 50% at 22% 36%, rgba(235, 60, 120, 0.5), rgba(235, 60, 120, 0) 70%), radial-gradient(80% 50% at 50% -5%, rgba(90, 60, 170, 0.55), rgba(90, 60, 170, 0) 70%), linear-gradient(180deg, #24123a 0%, #3a1530 45%, #120812 100%); }
+  .bg .sw.bgd-nebula { background: radial-gradient(40% 45% at 70% 30%, rgba(190, 90, 255, 0.6), rgba(190, 90, 255, 0) 70%), radial-gradient(50% 55% at 28% 58%, rgba(60, 110, 255, 0.5), rgba(60, 110, 255, 0) 70%), radial-gradient(22% 25% at 54% 42%, rgba(255, 170, 225, 0.32), rgba(255, 170, 225, 0) 70%), linear-gradient(160deg, #120e2a, #05050c); }
+  .bg .sw.bgd-graphite { background: radial-gradient(90% 80% at 50% 0%, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 65%), linear-gradient(180deg, #2a2c33 0%, #17191e 55%, #0b0c0f 100%); }
+  .bg .sw.bgd-midnight { background: radial-gradient(2px 2px at 44% 12%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0)), radial-gradient(2.5px 2.5px at 9% 7%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0)), radial-gradient(1.5px 1.5px at 49% 40%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0)), radial-gradient(1.5px 1.5px at 30% 5%, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0)), radial-gradient(1.5px 1.5px at 56% 7%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0)), radial-gradient(1.5px 1.5px at 73% 30%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0)), radial-gradient(2.5px 2.5px at 18% 17%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0)), radial-gradient(2.5px 2.5px at 77% 6%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0)), radial-gradient(1.5px 1.5px at 53% 6%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0)), radial-gradient(2px 2px at 74% 11%, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0)), radial-gradient(1.5px 1.5px at 21% 37%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0)), radial-gradient(2.5px 2.5px at 42% 38%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0)), radial-gradient(2.5px 2.5px at 16% 40%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0)), radial-gradient(1.5px 1.5px at 27% 26%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0)), radial-gradient(2.5px 2.5px at 94% 7%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0)), radial-gradient(2px 2px at 82% 16%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0)), radial-gradient(90% 22% at 50% 56%, rgba(90, 140, 255, 0.34), rgba(90, 140, 255, 0) 75%), radial-gradient(60% 40% at 50% 120%, rgba(40, 70, 170, 0.4), rgba(40, 70, 170, 0) 70%), linear-gradient(180deg, #070a18, #020205); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <svg viewBox="0 0 120 120" aria-hidden="true">
+      <defs>
+        <linearGradient id="t" x1="0" y1="0" x2=".3" y2="1"><stop offset="0" stop-color="#34405f"/><stop offset="1" stop-color="#0b0f1a"/></linearGradient>
+        <radialGradient id="h" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".35" stop-color="#bfe3ff" stop-opacity=".55"/><stop offset="1" stop-color="#8a7dff" stop-opacity="0"/></radialGradient>
+      </defs>
+      <rect x="6" y="6" width="108" height="108" rx="32" fill="url(#t)" stroke="rgba(255,255,255,.22)" stroke-width="1.5"/>
+      <circle cx="82" cy="38" r="26" fill="url(#h)"/>
+      <path d="M40 30v42a14 14 0 0 0 14 14h32" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="82" cy="38" r="8.5" fill="#fff"/>
+    </svg>
+    <div><h1>Lumen</h1><div class="sub">Web-Backend</div></div>
+  </header>
+
+  <section class="status" id="status"></section>
+
+  <h2>Hintergrund</h2>
+  <div class="bgs" id="bgs"></div>
+  <div class="btns" style="padding-left:0"><label class="btn">Eigenes Bild hochladen<input type="file" id="bgup" accept="image/jpeg,image/png" multiple></label></div>
+  <p class="note" style="margin-top:6px">Klick auf eine Kachel macht sie zum Hintergrund von Lumen. Eigene Bilder: JPEG oder PNG, am besten 1920×1080, max. 12 MB.</p>
+
+  <h2>Apps</h2>
+  <div class="grid" id="apps"></div>
+  <p class="note">„Inhalt der Kachel“ legt fest, was die große Karte in Lumen zeigt. „Automatisch“ nimmt ein eigenes Bild, sonst den letzten Bildschirm, sonst das App-Symbol.
+    „Eigenschaft“ erscheint unter dem App-Namen (leer = automatisch). Eigene Bilder: 16:9, JPEG oder PNG, max. 6 MB. Lumen übernimmt Änderungen nach wenigen Sekunden.</p>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+(function () {
+  var $ = function (s) { return document.querySelector(s); };
+  function toast(t) { var n = $('#toast'); n.textContent = t; n.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(function () { n.classList.remove('on'); }, 2400); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function fmt(sec) { var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60); return (h ? h + ' h ' : '') + m + ' min'; }
+
+  function load() {
+    fetch('/api/status', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(render).catch(function () { toast('Lumen nicht erreichbar'); });
+  }
+
+  var CONTENT = [['auto', 'Automatisch'], ['custom', 'Eigenes Bild'], ['shot', 'Letzter Bildschirm'], ['logo', 'App-Symbol']];
+  var state = { media: {}, tiles: {} };
+
+  function render(s) {
+    $('#status').innerHTML =
+      stat('Version', 'Lumen ' + esc(s.version)) + stat('Adresse', esc((s.ips[0] || location.hostname) + ':' + s.port)) +
+      stat('Fernseher an seit', fmt(s.tvUptime || 0)) + stat('Node.js', esc(s.node));
+    var media = state.media = {}; (s.media || []).forEach(function (m) { media[m.id] = m; });
+    state.tiles = s.tiles || {};
+    renderBgs(s.backgrounds || [], (s.ui && s.ui.bg) || 'accent');
+    var apps = (s.apps || []).slice();
+    Object.keys(media).forEach(function (id) { if (!apps.some(function (a) { return a.id === id; })) apps.push({ id: id, title: id }); });
+    $('#apps').innerHTML = apps.length ? apps.map(function (a) { return card(a, media[a.id] || {}, state.tiles[a.id] || {}); }).join('') :
+      '<p class="sub">Noch keine App-Liste – Lumen einmal öffnen.</p>';
+    each('input[type=file]', function (inp) {
+      inp.addEventListener('change', function () { if (inp.files[0]) upload(inp.dataset.id, inp.files[0]); });
+    });
+    each('button.del', function (b) { b.addEventListener('click', function () { remove(b.dataset.id); }); });
+    each('select.content', function (sel) {
+      sel.addEventListener('change', function () { saveTile(sel.dataset.id, { content: sel.value }); });
+    });
+    each('input.tagin', function (inp) {
+      function go() { if (inp.value !== inp.dataset.was) { inp.dataset.was = inp.value; saveTile(inp.dataset.id, { tag: inp.value }); } }
+      inp.addEventListener('change', go);
+      inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { inp.blur(); go(); } });
+    });
+  }
+  function each(sel, fn) { Array.prototype.forEach.call(document.querySelectorAll(sel), fn); }
+  function stat(k, v) { return '<div class="stat"><b>' + k + '</b><span>' + v + '</span></div>'; }
+
+  // Was zeigt Lumen für diese App? (gleiche Regeln wie in Lumen)
+  function shown(m, t) {
+    var c = t.content || 'auto';
+    if (c === 'logo') return null;
+    if (c === 'custom') return m.manual ? { e: m.manual, label: 'Eigenes Bild' } : null;
+    if (c === 'shot') return m.shot ? { e: m.shot, label: m.pinned ? 'Bildschirm · festgehalten' : 'Letzter Bildschirm' } : null;
+    if (m.manual) return { e: m.manual, label: 'Eigenes Bild' };
+    if (m.shot) return { e: m.shot, label: m.pinned ? 'Bildschirm · festgehalten' : 'Letzter Bildschirm' };
+    return null;
+  }
+  function card(a, m, t) {
+    var sh = shown(m, t), color = a.color || '#2b3140';
+    var thumb = sh
+      ? '<div class="thumb" style="background-image:url(/media/' + encodeURI(sh.e.file) + '?t=' + sh.e.mtime + ')"><span class="src">' + sh.label + '</span></div>'
+      : '<div class="thumb" style="background:linear-gradient(150deg,' + esc(color) + ',#0f121a)">' +
+        (a.icon ? '<img class="ico" alt="" src="/icon/' + encodeURIComponent(a.icon) + '">' : '<span class="letter">' + esc((a.title || '?').charAt(0)) + '</span>') +
+        '<span class="src">App-Symbol</span></div>';
+    var opts = CONTENT.map(function (o) {
+      return '<option value="' + o[0] + '"' + ((t.content || 'auto') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+    }).join('');
+    return '<div class="app">' + thumb +
+      '<div class="head"><span class="dot" style="background:' + esc(color) + '"></span><span class="name">' + esc(a.title) + '</span></div>' +
+      '<label class="field"><span>Inhalt der Kachel</span><select class="content" data-id="' + esc(a.id) + '">' + opts + '</select></label>' +
+      '<label class="field"><span>Eigenschaft</span><input class="tagin" type="text" maxlength="32" data-id="' + esc(a.id) + '" data-was="' + esc(t.tag || '') +
+        '" value="' + esc(t.tag || '') + '" placeholder="' + esc(a.tag || 'automatisch') + '"></label>' +
+      '<div class="btns"><label class="btn">Eigenes Bild hochladen<input type="file" accept="image/jpeg,image/png" data-id="' + esc(a.id) + '"></label>' +
+      (m.manual ? '<button class="del" data-id="' + esc(a.id) + '">Eigenes Bild entfernen</button>' : '') + '</div></div>';
+  }
+  function saveTile(id, patch) {
+    fetch('/api/tiles/' + encodeURIComponent(id), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { toast(j.ok ? 'Gespeichert – Lumen übernimmt es gleich' : (j.error || 'Fehler')); load(); })
+      .catch(function () { toast('Speichern fehlgeschlagen'); });
+  }
+  var DESIGNS = [['aurora', 'Polarlicht'], ['deepsea', 'Tiefsee'], ['sunset', 'Abendrot'], ['nebula', 'Nebel'], ['graphite', 'Graphit'], ['midnight', 'Mitternacht']];
+  function renderBgs(list, active) {
+    var html = '<div class="bg accent' + (active === 'accent' ? ' on' : '') + '" data-bg="accent"><div class="sw"></div><div class="cap"><span>App-Farbe</span></div></div>';
+    DESIGNS.forEach(function (d) {
+      var v = 'design:' + d[0];
+      html += '<div class="bg' + (active === v ? ' on' : '') + '" data-bg="' + v + '"><div class="sw bgd-' + d[0] + '"></div><div class="cap"><span>' + d[1] + '</span></div></div>';
+    });
+    list.forEach(function (b) {
+      var v = 'image:' + b.file;
+      html += '<div class="bg' + (active === v ? ' on' : '') + '" data-bg="' + esc(v) + '"><div class="sw" style="background-image:url(/media/backgrounds/' +
+        encodeURIComponent(b.file) + '?t=' + b.mtime + ')"></div><div class="cap"><span>' + esc(b.file.replace(/\.(jpg|png)$/, '')) +
+        '</span><button class="del" data-file="' + esc(b.file) + '">Löschen</button></div></div>';
+    });
+    $('#bgs').innerHTML = html;
+    each('#bgs .bg', function (n) {
+      n.addEventListener('click', function (e) {
+        if (e.target.closest('button.del')) return;
+        fetch('/api/ui', { method: 'PUT', body: JSON.stringify({ bg: n.dataset.bg }) }).then(function (r) { return r.json(); })
+          .then(function (j) { toast(j.ok ? 'Hintergrund gewählt – Lumen übernimmt ihn gleich' : (j.error || 'Fehler')); load(); });
+      });
+    });
+    each('#bgs button.del', function (b) {
+      b.addEventListener('click', function () {
+        fetch('/api/background/' + encodeURIComponent(b.dataset.file), { method: 'DELETE' }).then(function () { toast('Gelöscht'); load(); });
+      });
+    });
+  }
+  document.getElementById('bgup').addEventListener('change', function () {
+    var files = Array.prototype.slice.call(this.files || []);
+    this.value = '';
+    toast('Wird hochgeladen …');
+    files.reduce(function (p, f) {
+      return p.then(function () {
+        return fetch('/api/background/' + encodeURIComponent(f.name), { method: 'PUT', body: f }).then(function (r) { return r.json(); })
+          .then(function (j) { if (!j.ok) toast(j.error || 'Fehler'); });
+      });
+    }, Promise.resolve()).then(function () { toast('Hochgeladen'); load(); });
+  });
+
+  function upload(id, file) {
+    toast('Wird hochgeladen …');
+    fetch('/api/preview/' + encodeURIComponent(id), { method: 'PUT', body: file }).then(function (r) { return r.json(); })
+      .then(function (j) { toast(j.ok ? 'Gespeichert' : (j.error || 'Fehler')); load(); })
+      .catch(function () { toast('Hochladen fehlgeschlagen'); });
+  }
+  function remove(id) {
+    fetch('/api/preview/' + encodeURIComponent(id), { method: 'DELETE' }).then(function () { toast('Entfernt'); load(); });
+  }
+  load();
+})();
+</script>
+</body>
+</html>

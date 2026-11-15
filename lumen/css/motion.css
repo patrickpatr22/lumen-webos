@@ -1,0 +1,215 @@
+/*
+ * Lumen – Bewegung. Jede Animation hängt an einem eigenen Schalter:
+ *   body.anim                Hauptschalter (Uhr, Titel, Symbole zeichnen)
+ *   body.a-float             ausgewählte Kachel schwebt
+ *   body.a-breathe           Vorschaukarte atmet
+ *   body.a-pointer           Licht unter dem Zeiger, Kacheln richten sich aus
+ *   body.a-ambient           Hintergrundlicht wandert
+ *   body[data-swap]          Vorschau-Wechsel: fly | rise | tilt | fade | off
+ *   body[data-select]        Kachel-Auswahl: pop | bounce | tilt | off
+ *   body.building.build-*    Aufbau: structured | stagger | soft | reveal
+ *
+ * Tempo: --tk (App-Reihe, Titel) und --ck (Vorschaukarte) sind Zeitfaktoren aus den
+ * Reglern (1 = normal, größer = langsamer).
+ *
+ * Leistung: Animiert werden nur Ebenen, die der Grafikchip fertig verschieben kann
+ * (transform/opacity bzw. translate/rotate/scale). Nichts, was beim Auswählen neu
+ * gezeichnet werden müsste (Masken, Schatten, Weichzeichner).
+ */
+
+/* ---------- Grundbewegungen ---------- */
+body.anim #clock.tick-a { animation: tickA 520ms var(--ease) both; }
+body.anim #clock.tick-b { animation: tickB 520ms var(--ease) both; }
+@keyframes tickA { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+@keyframes tickB { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+
+body.anim #hero.pop-a #hero-title { animation: popA calc(420ms * var(--tk)) var(--ease) both; }
+body.anim #hero.pop-b #hero-title { animation: popB calc(420ms * var(--tk)) var(--ease) both; }
+body.anim #hero.pop-a #hero-tag { animation: tagA calc(460ms * var(--tk)) var(--ease) calc(70ms * var(--tk)) both; }
+body.anim #hero.pop-b #hero-tag { animation: tagB calc(460ms * var(--tk)) var(--ease) calc(70ms * var(--tk)) both; }
+@keyframes popA { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes popB { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes tagA { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes tagB { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* Symbole: Linien zeichnen sich beim Fokussieren, das Zahnrad dreht sich langsam */
+body.anim .chip.is-focused svg.draw > *,
+body.anim .art-face svg.draw > * {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw 760ms cubic-bezier(0.4, 0, 0.2, 1) 60ms forwards;
+}
+@keyframes draw { to { stroke-dashoffset: 0; } }
+body.anim .chip.is-focused svg.spin, body.anim .art-face svg.spin { animation: spin 7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+body.anim .chip.is-focused { transition-timing-function: var(--spring); transition-duration: calc(360ms * var(--tk)); }
+body.anim .tile.is-focused .tile-face { transition-timing-function: var(--spring); transition-duration: calc(420ms * var(--tk)); }
+
+/* ---------- Kachel-Auswahl ---------- */
+/* Pop: die ganze Kachel federt kurz über ihr Ziel hinaus (eine Ebene, nichts wird neu gezeichnet) */
+body[data-select="pop"] .tile.is-focused .tile-face { animation: facePop calc(600ms * var(--tk)) var(--ease) both; }
+@keyframes facePop {
+  0% { transform: scale(0.92) translateY(0); }
+  42% { transform: scale(1.12) translateY(-7px); }
+  70% { transform: scale(1.05) translateY(-3px); }
+  100% { transform: scale(1.07) translateY(-4px); }
+}
+
+/* Hüpfen: kurzer Sprung mit Landung */
+body[data-select="bounce"] .tile.is-focused .tile-face { animation: tileBounce calc(680ms * var(--tk)) var(--ease) both; }
+@keyframes tileBounce {
+  0% { transform: scale(0.92, 0.92) translateY(0); }
+  32% { transform: scale(1.05, 1.08) translateY(-18px); }
+  58% { transform: scale(1.11, 1.02) translateY(-2px); }
+  78% { transform: scale(1.06, 1.08) translateY(-8px); }
+  100% { transform: scale(1.07, 1.07) translateY(-4px); }
+}
+
+/* Kippen: die neue Auswahl kippt in Bewegungsrichtung ein */
+body[data-select="tilt"] .tile.is-focused.from-l .tile-face { animation: tiltL calc(500ms * var(--tk)) var(--ease) both; }
+body[data-select="tilt"] .tile.is-focused.from-r .tile-face { animation: tiltR calc(500ms * var(--tk)) var(--ease) both; }
+@keyframes tiltL {
+  0% { transform: perspective(900px) rotateY(-16deg) scale(0.94) translateY(0); }
+  55% { transform: perspective(900px) rotateY(4deg) scale(1.08) translateY(-5px); }
+  100% { transform: perspective(900px) rotateY(0deg) scale(1.07) translateY(-4px); }
+}
+@keyframes tiltR {
+  0% { transform: perspective(900px) rotateY(16deg) scale(0.94) translateY(0); }
+  55% { transform: perspective(900px) rotateY(-4deg) scale(1.08) translateY(-5px); }
+  100% { transform: perspective(900px) rotateY(0deg) scale(1.07) translateY(-4px); }
+}
+
+/* Schweben der Auswahl (auf der Zeiger-Ebene) */
+body.a-float:not(.building) .tile.lit { animation: floaty 7s ease-in-out 700ms infinite; }
+@keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2.5px); } }
+
+/* ---------- Vorschau-Wechsel ---------- */
+/* Einfliegen & Drehen: von unten, klein → groß, dreht sich um die eigene Achse */
+body[data-swap="fly"] #art.swap-a .art-card { animation: flyA calc(860ms * var(--ck)) cubic-bezier(0.2, 0.85, 0.25, 1) both; }
+body[data-swap="fly"] #art.swap-b .art-card { animation: flyB calc(860ms * var(--ck)) cubic-bezier(0.2, 0.85, 0.25, 1) both; }
+@keyframes flyA {
+  0% { opacity: 0; transform: perspective(1200px) translate3d(0, 170px, 0) rotateY(-200deg) scale(0.42); }
+  40% { opacity: 1; }
+  74% { transform: perspective(1200px) translate3d(0, -12px, 0) rotateY(9deg) scale(1.035); }
+  100% { opacity: 1; transform: perspective(1200px) translate3d(0, 0, 0) rotateY(0deg) scale(1); }
+}
+@keyframes flyB {
+  0% { opacity: 0; transform: perspective(1200px) translate3d(0, 170px, 0) rotateY(-200deg) scale(0.42); }
+  40% { opacity: 1; }
+  74% { transform: perspective(1200px) translate3d(0, -12px, 0) rotateY(9deg) scale(1.035); }
+  100% { opacity: 1; transform: perspective(1200px) translate3d(0, 0, 0) rotateY(0deg) scale(1); }
+}
+/* Aufsteigen: von unten, klein → groß, schwenkt in die Lage (ohne volle Drehung) */
+body[data-swap="rise"] #art.swap-a .art-card { animation: riseA calc(720ms * var(--ck)) cubic-bezier(0.2, 0.8, 0.25, 1) both; }
+body[data-swap="rise"] #art.swap-b .art-card { animation: riseB calc(720ms * var(--ck)) cubic-bezier(0.2, 0.8, 0.25, 1) both; }
+@keyframes riseA {
+  0% { opacity: 0; transform: perspective(1200px) translate3d(0, 110px, 0) rotateX(-30deg) rotateY(-26deg) scale(0.66); }
+  35% { opacity: 1; }
+  68% { transform: perspective(1200px) translate3d(0, -8px, 0) rotateX(2deg) rotateY(3deg) scale(1.025); }
+  100% { opacity: 1; transform: perspective(1200px) translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg) scale(1); }
+}
+@keyframes riseB {
+  0% { opacity: 0; transform: perspective(1200px) translate3d(0, 110px, 0) rotateX(-30deg) rotateY(-26deg) scale(0.66); }
+  35% { opacity: 1; }
+  68% { transform: perspective(1200px) translate3d(0, -8px, 0) rotateX(2deg) rotateY(3deg) scale(1.025); }
+  100% { opacity: 1; transform: perspective(1200px) translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg) scale(1); }
+}
+/* Kippen: schwingt von rechts herein */
+body[data-swap="tilt"] #art.swap-a .art-card { animation: swTiltA calc(500ms * var(--ck)) var(--ease) both; }
+body[data-swap="tilt"] #art.swap-b .art-card { animation: swTiltB calc(500ms * var(--ck)) var(--ease) both; }
+@keyframes swTiltA { from { opacity: 0; transform: perspective(1200px) translateX(46px) rotateY(26deg) scale(0.95); } to { opacity: 1; transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); } }
+@keyframes swTiltB { from { opacity: 0; transform: perspective(1200px) translateX(46px) rotateY(26deg) scale(0.95); } to { opacity: 1; transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); } }
+/* Überblenden */
+body[data-swap="fade"] #art.swap-a .art-card { animation: swFadeA calc(360ms * var(--ck)) ease both; }
+body[data-swap="fade"] #art.swap-b .art-card { animation: swFadeB calc(360ms * var(--ck)) ease both; }
+@keyframes swFadeA { from { opacity: 0; transform: scale(0.985); } to { opacity: 1; transform: none; } }
+@keyframes swFadeB { from { opacity: 0; transform: scale(0.985); } to { opacity: 1; transform: none; } }
+
+/* ---------- Vorschau atmet (Glas) ---------- */
+/* Schwebt langsam auf einer Schleife und dreht sich minimal im Raum – auf einer eigenen
+   Ebene (.art-float), die Grundneigung sitzt darunter auf .art-tilt. Mit transform statt
+   translate/rotate/scale, die webOS 22/23 (Chromium 87/94) noch nicht kennen. */
+body.a-breathe[data-theme="glas"] #art:not(.live) .art-float { animation: artBreath 16s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+@keyframes artBreath {
+  0%, 100% { transform: translate(0, 0) rotate3d(0, 1, 0, 0deg) scale(1); }
+  25% { transform: translate(10px, -9px) rotate3d(-0.371, 0.928, 0, 3.4deg) scale(1.008); }
+  50% { transform: translate(3px, -15px) rotate3d(0.928, 0.371, 0, 1.8deg) scale(1.014); }
+  75% { transform: translate(-9px, -6px) rotate3d(-0.217, -0.976, 0, 3deg) scale(1.006); }
+}
+
+/* ---------- Hintergrund ---------- */
+body.a-ambient[data-theme="glas"] .amb { animation: drift 38s ease-in-out infinite alternate; }
+body.a-ambient[data-theme="glas"] .amb + .amb { animation-duration: 46s; animation-direction: alternate-reverse; }
+@keyframes drift { from { transform: translate3d(-1.6%, -1%, 0) scale(1); } to { transform: translate3d(1.6%, 1.2%, 0) scale(1.05); } }
+
+/* Weiches Licht unter dem Zeiger der Magic Remote */
+body.a-pointer[data-theme="glas"] #plight {
+  display: block;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 760px;
+  height: 760px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0));
+  opacity: 0;
+  transition: opacity 500ms ease;
+  will-change: transform, opacity;
+}
+body.a-pointer[data-theme="glas"] #plight.on { opacity: 1; }
+
+/* ---------- Aufbau ---------- */
+/* Strukturiert & gestaffelt: Stück für Stück – Kopfzeile, Titel, Karte, Dock, Kacheln, Eingänge */
+body.build-structured #top, body.build-stagger #top { animation: bTop 520ms var(--ease) both; }
+body.build-structured #top { animation-delay: 90ms; }
+body.build-structured #hero, body.build-stagger #hero { animation: bHero 620ms var(--ease) both; }
+body.build-structured #hero { animation-delay: 170ms; }
+body.build-stagger #hero { animation-delay: 60ms; }
+body.build-structured #art, body.build-stagger #art { animation: bArt 640ms var(--ease) both; }
+body.build-structured #art { animation-delay: 150ms; }
+body.build-stagger #art { animation-delay: 60ms; }
+body.build-structured .row-label, body.build-stagger .row-label { animation: bFade 420ms ease both; animation-delay: 160ms; }
+body.build-structured .dock-bg, body.build-stagger .dock-bg { animation: bDock 600ms var(--ease) both; animation-delay: 120ms; }
+body.build-structured .tile, body.build-stagger .tile { animation: bTile 560ms var(--pop) both; }
+body.build-structured .tile { animation-delay: calc(240ms + var(--i, 0) * 46ms); }
+body.build-stagger .tile { animation-delay: calc(120ms + var(--i, 0) * 38ms); }
+body.build-structured .chip, body.build-structured .chip-sep,
+body.build-stagger .chip, body.build-stagger .chip-sep { animation: bChip 480ms var(--ease) both; }
+body.build-structured .chip, body.build-structured .chip-sep { animation-delay: calc(420ms + var(--i, 0) * 40ms); }
+body.build-stagger .chip, body.build-stagger .chip-sep { animation-delay: calc(260ms + var(--i, 0) * 32ms); }
+/* Hilfslinien zeichnen sich und verblassen, sobald die Inhalte stehen */
+body.build-structured #guides .g { animation: guide 1000ms var(--ease) both; }
+body.build-structured #guides .g2 { animation-delay: 70ms; }
+body.build-structured #guides .g3 { animation-delay: 140ms; }
+/* Sanft: ganze Bereiche gleiten herein – ohne vorher alles auszublenden */
+body.build-soft #top { animation: sTop 520ms var(--ease) both; }
+body.build-soft #hero { animation: sHero 560ms var(--ease) 40ms both; }
+body.build-soft #art { animation: sArt 620ms var(--ease) 70ms both; }
+body.build-soft #rows { animation: sRows 600ms var(--ease) 90ms both; }
+/* Nach der Start-Animation: alles taucht aus der Tiefe auf */
+body.build-reveal #bg { animation: bFade 700ms ease both; }
+body.build-reveal #top { animation: rTop 760ms var(--ease) 120ms both; }
+body.build-reveal #hero { animation: rHero 820ms var(--ease) 160ms both; }
+body.build-reveal #art { animation: rArt 900ms var(--ease) 120ms both; }
+body.build-reveal #rows { animation: rRows 860ms var(--ease) 220ms both; }
+
+@keyframes bTop { from { opacity: 0; transform: translate(0, -18px); } to { opacity: 1; transform: translate(0, 0); } }
+@keyframes bHero { from { opacity: 0; transform: translate(-36px, 0); } to { opacity: 1; transform: translate(0, 0); } }
+@keyframes bArt { from { opacity: 0; transform: translate(0, 36px); } to { opacity: 1; transform: translate(0, 0); } }
+@keyframes bFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes bDock { from { opacity: 0; transform: scale(0.96, 1); } to { opacity: 1; transform: scale(1, 1); } }
+@keyframes bTile { from { opacity: 0; transform: translate(0, 34px) scale(0.86); } to { opacity: 1; transform: translate(0, 0) scale(1); } }
+@keyframes bChip { from { opacity: 0; transform: translate(0, 22px); } to { opacity: 1; transform: translate(0, 0); } }
+@keyframes sTop { from { opacity: 0.4; transform: translate(0, -10px); } to { opacity: 1; transform: translate(0, 0); } }
+@keyframes sHero { from { opacity: 0.35; transform: translate(-16px, 0); } to { opacity: 1; transform: translate(0, 0); } }
+@keyframes sArt { from { opacity: 0.35; transform: translate(0, 18px); } to { opacity: 1; transform: translate(0, 0); } }
+@keyframes sRows { from { opacity: 0.4; transform: translate(0, 20px); } to { opacity: 1; transform: translate(0, 0); } }
+@keyframes rTop { from { opacity: 0; transform: scale(1.06); } to { opacity: 1; transform: scale(1); } }
+@keyframes rHero { from { opacity: 0; transform: translate(30px, 0) scale(1.08); } to { opacity: 1; transform: translate(0, 0) scale(1); } }
+@keyframes rArt { from { opacity: 0; transform: scale(1.12); } to { opacity: 1; transform: scale(1); } }
+@keyframes rRows { from { opacity: 0; transform: translate(0, 30px) scale(1.05); } to { opacity: 1; transform: translate(0, 0) scale(1); } }
+@keyframes guide {
+  0% { opacity: 0.9; transform: scaleX(0); }
+  38% { opacity: 0.9; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}

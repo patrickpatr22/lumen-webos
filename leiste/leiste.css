@@ -1,0 +1,304 @@
+/*
+ * Lumen Leiste – Eingangsauswahl über dem laufenden Bild (Source-Taste).
+ * Kein Weichzeichner (backdrop-filter), nur halbdurchsichtige Flächen: das bleibt auf
+ * dem Fernseher flüssig und liegt sauber über der Videoebene.
+ */
+@font-face {
+  font-family: 'Inter';
+  src: url('fonts/inter-latin-wght-normal.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: block;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.96);
+  font-family: 'Inter', 'LG Smart UI', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+/* weicher Schatten von unten, damit die Leiste auf hellem Bild lesbar bleibt */
+body::before {
+  content: '';
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: 420px;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0));
+  opacity: 0;
+  transition: opacity 260ms ease;
+}
+body.bar-in::before { opacity: 1; }
+
+#bar {
+  position: fixed;
+  left: 50%;
+  bottom: 64px;
+  max-width: 1800px;
+  padding: 22px 30px 30px;
+  border-radius: 46px;
+  background:
+    radial-gradient(120% 100% at 50% -30%, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 60%),
+    rgba(18, 20, 30, 0.86);
+  box-shadow:
+    inset 1.5px 1.5px 0.5px rgba(255, 255, 255, 0.30),
+    inset -1px -1px 0.5px rgba(255, 255, 255, 0.10),
+    0 30px 70px rgba(0, 0, 0, 0.55);
+  transform: translate(-50%, 140px);
+  opacity: 0;
+  transition: transform 340ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 240ms ease;
+  will-change: transform, opacity;
+}
+body.bar-in #bar { transform: translate(-50%, 0); opacity: 1; }
+body.bar-out #bar { transform: translate(-50%, 140px); opacity: 0; transition-duration: 220ms, 200ms; }
+body.bar-out::before { opacity: 0; }
+
+#bar-head { display: flex; align-items: baseline; justify-content: space-between; gap: 40px; margin: 0 8px 18px; }
+#bar-title { font-size: 21px; font-weight: 600; letter-spacing: 2.6px; text-transform: uppercase; color: rgba(255, 255, 255, 0.55); }
+#bar-hint { font-size: 18px; color: rgba(255, 255, 255, 0.38); }
+/* Leiste zu breit → seitlich verschieben; nach oben darf „Schließen“ herausragen */
+#bar-viewport { clip-path: inset(-90px 0 -40px 0); }
+#bar-track { display: flex; gap: 18px; padding: 0 6px; transition: transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+.chip {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 210px;
+  height: 92px;
+  padding: 0 28px 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.05));
+  box-shadow: inset 1.5px 1.5px 0.5px rgba(255, 255, 255, 0.40), inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  transition: transform 220ms cubic-bezier(0.3, 1.4, 0.5, 1);
+  will-change: transform;
+}
+.chip svg { flex: 0 0 auto; width: 40px; height: 40px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.chip-text { display: flex; flex-direction: column; min-width: 0; }
+.chip-title { font-size: 25px; font-weight: 600; white-space: nowrap; }
+.chip-sub { margin-top: 2px; font-size: 16px; font-weight: 500; color: rgba(255, 255, 255, 0.45); white-space: nowrap; }
+.chip-dot { flex: 0 0 auto; width: 10px; height: 10px; margin-left: auto; border-radius: 50%; background: rgba(255, 255, 255, 0.2); }
+.chip-dot.on { background: #4ade80; box-shadow: 0 0 10px rgba(74, 222, 128, 0.75); }
+.chip.current .chip-sub { color: #8ab4ff; }
+.chip-sep { flex: 0 0 2px; align-self: center; height: 56px; margin: 0 8px; background: rgba(255, 255, 255, 0.22); border-radius: 1px; }
+.chip.is-focused { background: linear-gradient(180deg, #ffffff, #e9ecf3); color: #0b0d12; transform: scale(1.07); box-shadow: 0 16px 34px rgba(0, 0, 0, 0.4); }
+.chip.is-focused .chip-sub { color: rgba(11, 13, 18, 0.55); }
+.chip.is-focused.current .chip-sub { color: #1d4ed8; }
+.chip.is-focused .chip-dot { background: rgba(11, 13, 18, 0.2); }
+.chip.is-focused .chip-dot.on { background: #16a34a; box-shadow: none; }
+
+/* Apps im Hintergrund: Symbol in der App-Farbe */
+.chip-app {
+  position: relative;
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+  margin-left: -8px;
+  border-radius: 16px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: #3a4258;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+.chip-app img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.chip-app span { font-size: 26px; font-weight: 700; color: #fff; }
+.chip.has-icon .chip-app span { visibility: hidden; }
+.chip.k-app { padding-left: 24px; }
+.chip.k-closeall .chip-sub, .chip.k-closeall svg { color: #ff9b9b; }
+.chip.k-closeall.is-focused .chip-sub, .chip.k-closeall.is-focused svg { color: #b3261e; }
+
+/* „Schließen“ über einer App (Hoch drücken) */
+.chip-x {
+  position: absolute;
+  left: 50%;
+  top: -62px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 18px 0 12px;
+  border-radius: 999px;
+  font-size: 19px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #fff;
+  background: rgba(40, 44, 60, 0.92);
+  box-shadow: inset 1px 1px 0.5px rgba(255, 255, 255, 0.25), 0 8px 20px rgba(0, 0, 0, 0.4);
+  transform: translate(-50%, 10px) scale(0.9);
+  opacity: 0;
+  transition: opacity 180ms ease, transform 220ms cubic-bezier(0.3, 1.4, 0.5, 1), background-color 160ms ease;
+  pointer-events: none;
+}
+.chip-x svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+.chip.k-app.is-focused .chip-x { opacity: 1; transform: translate(-50%, 0) scale(1); pointer-events: auto; }
+.chip.x-sel .chip-x { background: #ff453a; color: #fff; transform: translate(-50%, -2px) scale(1.08); }
+.chip.x-sel { transform: scale(1.02); }
+
+/* geschlossene App verschwindet */
+.chip.gone { opacity: 0; transform: scale(0.8) !important; transition: opacity 200ms ease, transform 200ms ease; }
+
+/* ======================================================================
+ * Schnelleinstellungen (Einstellungen-Taste) – Seitenleiste links
+ * ====================================================================== */
+body::after {
+  content: '';
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  width: 900px;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
+  opacity: 0;
+  transition: opacity 260ms ease;
+  pointer-events: none;
+}
+body.panel-in::after { opacity: 1; }
+
+/* gleiche Glasfläche wie die Source-Leiste unten */
+#panel {
+  position: fixed;
+  left: 40px;
+  top: 40px;
+  max-height: calc(100% - 80px);
+  width: 640px;
+  padding: 26px 28px 30px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 46px;
+  background:
+    radial-gradient(120% 50% at 30% -10%, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 60%),
+    rgba(18, 20, 30, 0.93);
+  box-shadow:
+    inset 1.5px 1.5px 0.5px rgba(255, 255, 255, 0.30),
+    inset -1px -1px 0.5px rgba(255, 255, 255, 0.10),
+    0 30px 70px rgba(0, 0, 0, 0.55);
+  transform: translateX(-720px);
+  opacity: 0;
+  transition: transform 340ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 240ms ease;
+  will-change: transform, opacity;
+  z-index: 5;
+}
+body.panel-in #panel { transform: none; opacity: 1; }
+body.panel-out #panel { transform: translateX(-720px); opacity: 0; transition-duration: 220ms, 200ms; }
+
+/* Kopf wie „Wechseln zu“ */
+.p-head { display: flex; align-items: baseline; justify-content: space-between; margin: 0 8px 18px; }
+.p-title { font-size: 21px; font-weight: 600; letter-spacing: 2.6px; text-transform: uppercase; color: rgba(255, 255, 255, 0.55); }
+.p-sub { font-size: 20px; font-weight: 500; color: rgba(255, 255, 255, 0.45); font-variant-numeric: tabular-nums; }
+
+/* Alles Bedienbare sieht aus wie die Chips der Source-Leiste:
+   gläsern mit Lichtkante, ausgewählt weiß und leicht vergrößert */
+.p-ico, .p-rec, .p-tile, .p-end {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.05));
+  box-shadow: inset 1.5px 1.5px 0.5px rgba(255, 255, 255, 0.40), inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  transition: transform 220ms cubic-bezier(0.3, 1.4, 0.5, 1);
+  will-change: transform;
+}
+.p-ico.is-focused, .p-rec.is-focused, .p-tile.is-focused {
+  background: linear-gradient(180deg, #ffffff, #e9ecf3);
+  color: #0b0d12;
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.4);
+}
+
+/* Symbolleiste */
+.p-top { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.p-sep { width: 2px; height: 46px; margin: 0 4px; border-radius: 1px; background: rgba(255, 255, 255, 0.22); }
+.p-ico { position: relative; width: 66px; height: 66px; border-radius: 50%; display: grid; place-items: center; }
+.p-ico:last-child { margin-left: auto; }
+.p-ico svg { width: 34px; height: 34px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.p-ico.on { background: #0a84ff; }
+.p-ico.is-focused { transform: scale(1.08); }
+.p-tip {
+  position: absolute; top: 76px; left: 50%; transform: translateX(-50%);
+  padding: 6px 14px; border-radius: 99px; font-size: 17px; font-weight: 600; white-space: nowrap;
+  color: #fff; background: rgba(40, 44, 60, 0.95); opacity: 0; pointer-events: none; transition: opacity 160ms ease; z-index: 3;
+}
+.p-ico.is-focused .p-tip { opacity: 1; }
+
+/* Zuletzt geändert */
+.p-rec { display: flex; align-items: center; justify-content: space-between; height: 60px; padding: 0 26px; margin-bottom: 14px; border-radius: 999px; }
+.p-rec-k { font-size: 16px; font-weight: 600; letter-spacing: 1.8px; text-transform: uppercase; color: rgba(255, 255, 255, 0.45); }
+.p-rec-v { font-size: 24px; font-weight: 600; }
+.p-rec.is-focused { transform: scale(1.03); }
+.p-rec.is-focused .p-rec-k { color: rgba(11, 13, 18, 0.5); }
+
+/* Kacheln */
+.p-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+.p-tile { position: relative; min-width: 0; height: 118px; padding: 16px 22px; border-radius: 30px; display: flex; flex-direction: column; }
+.p-tile.is-focused { transform: scale(1.04); }
+.p-t-top { display: flex; align-items: center; gap: 12px; color: rgba(255, 255, 255, 0.6); }
+.p-t-top svg { width: 30px; height: 30px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.p-label { font-size: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p-value { margin-top: 6px; font-size: 26px; font-weight: 700; letter-spacing: -0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: rgba(255, 255, 255, 0.96); }
+.p-value.long { font-size: 21px; margin-top: 8px; white-space: normal; line-height: 1.15; max-height: 2.3em; }
+.p-tile.is-focused .p-value { color: #0b0d12; }
+.p-tile.is-focused .p-t-top { color: rgba(11, 13, 18, 0.58); }
+.p-extra { margin-top: auto; }
+.p-tile.k-toggle .p-extra { position: absolute; right: 22px; bottom: 20px; }
+
+/* Helligkeit: ganze Breite, Regler zum Ziehen, Knöpfe 0 / 100 */
+.p-tile.k-slider { grid-column: span 2; height: 136px; }
+.p-tile.k-slider .p-t-top .p-value { margin: 0 0 0 auto; font-size: 34px; font-variant-numeric: tabular-nums; }
+.p-slide { display: flex; align-items: center; gap: 16px; }
+.p-end {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 6px; height: 48px; padding: 0 14px 0 10px;
+  border: 0; border-radius: 999px; font: 600 17px 'Inter', sans-serif; color: inherit; cursor: pointer;
+}
+.p-end svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.p-end:hover { background: #0a84ff; color: #fff; box-shadow: none; }
+.p-tile.is-focused .p-end { background: rgba(11, 13, 18, 0.08); box-shadow: inset 0 0 0 1px rgba(11, 13, 18, 0.10); }
+.p-tile.is-focused .p-end:hover { background: #0a84ff; color: #fff; }
+.p-bar { position: relative; flex: 1; height: 12px; border-radius: 6px; background: rgba(255, 255, 255, 0.18); cursor: pointer; touch-action: none; }
+.p-bar::before { content: ''; position: absolute; left: 0; right: 0; top: -18px; bottom: -18px; }   /* größere Trefferfläche */
+.p-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; background: #fff; }
+.p-bar b {
+  position: absolute; top: 50%; width: 32px; height: 32px; margin: -16px 0 0 -16px; border-radius: 50%;
+  background: #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45); transition: transform 160ms ease;
+}
+.p-tile.dragging .p-bar b, .p-bar:hover b { transform: scale(1.15); }
+.p-tile.is-focused .p-bar { background: rgba(11, 13, 18, 0.14); }
+.p-tile.is-focused .p-bar i { background: #0a84ff; }
+.p-tile.is-focused .p-bar b { box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(11, 13, 18, 0.12); }
+.p-tile.is-editing { box-shadow: 0 0 0 4px #0a84ff, 0 16px 34px rgba(0, 0, 0, 0.4); }
+
+.p-dots { display: flex; gap: 7px; }
+.p-dots b { width: 7px; height: 7px; border-radius: 50%; background: rgba(255, 255, 255, 0.28); }
+.p-dots b.on { background: #fff; transform: scale(1.3); }
+.p-tile.is-focused .p-dots b { background: rgba(11, 13, 18, 0.22); }
+.p-tile.is-focused .p-dots b.on { background: #0b0d12; }
+.p-switch { position: relative; display: block; width: 58px; height: 34px; border-radius: 17px; background: rgba(255, 255, 255, 0.2); transition: background-color 200ms ease; }
+.p-switch i { position: absolute; top: 3px; left: 3px; width: 28px; height: 28px; border-radius: 50%; background: #fff; transition: transform 220ms cubic-bezier(0.3, 1.4, 0.5, 1); }
+.p-switch.on { background: #34c759; }
+.p-switch.on i { transform: translateX(24px); }
+
+.p-tile.k-action { justify-content: center; align-items: center; text-align: center; }
+.p-tile.k-action .p-t-top { flex-direction: column; gap: 12px; color: inherit; }
+.p-tile.k-action .p-t-top svg { width: 44px; height: 44px; }
+.p-tile.k-action .p-label { font-size: 21px; }
+.p-tile.k-action .p-value, .p-tile.k-action .p-extra { display: none; }
+
+/* Anpassen: Kacheln ein-/ausblenden */
+.p-vis { position: absolute; top: 14px; right: 14px; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: #34c759; color: #fff; }
+.p-vis svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.p-tile.is-hidden { opacity: 0.45; }
+.p-tile.is-hidden .p-vis { background: rgba(255, 255, 255, 0.25); }
+#panel.custom .p-tile.is-hidden.is-focused { opacity: 0.8; }
+
+/* Auswahlliste neben der Kachel – gleiche Glasfläche */
+#p-pop {
+  position: fixed; width: 440px; max-height: 760px; padding: 18px 12px 12px; border-radius: 34px;
+  background: radial-gradient(120% 60% at 30% -10%, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 60%), rgba(18, 20, 30, 0.94);
+  box-shadow: inset 1.5px 1.5px 0.5px rgba(255, 255, 255, 0.30), 0 30px 70px rgba(0, 0, 0, 0.55);
+  display: flex; flex-direction: column; z-index: 6;
+}
+#p-pop[hidden] { display: none; }
+.pp-title { margin: 0 16px 10px; font-size: 16px; font-weight: 600; letter-spacing: 1.8px; text-transform: uppercase; color: rgba(255, 255, 255, 0.5); }
+.pp-list { overflow: hidden; }
+.pp-item { display: flex; align-items: center; justify-content: space-between; height: 62px; padding: 0 18px; border-radius: 999px; font-size: 23px; font-weight: 500; cursor: pointer; }
+.pp-item svg { width: 26px; height: 26px; fill: none; stroke: #0a84ff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; visibility: hidden; }
+.pp-item.is-current svg { visibility: visible; }
+.pp-item.is-focused { background: linear-gradient(180deg, #ffffff, #e9ecf3); color: #0b0d12; }

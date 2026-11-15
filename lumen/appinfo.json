@@ -1,0 +1,1 @@
+{"id":"de.lumenhome.launcher","version":"1.6.2","vendor":"Lumen","type":"web","main":"index.html","title":"Lumen","icon":"icon.png","largeIcon":"largeIcon.png","bgColor":"#07080c","resolution":"1920x1080","disableBackHistoryAPI":true,"handlesRelaunch":false,"supportGIP":true,"transparent":false}

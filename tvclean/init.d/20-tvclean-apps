@@ -1,0 +1,11 @@
+#!/bin/sh
+# tvclean: Apps aus HIDE_APPS im Startmenü ausblenden.
+# Läuft früh beim Booten, bevor webOS die App-Liste einliest.
+TVC_TAG=boot-apps
+TVC_LIB="${TVC_ROOT:-}/var/lib/webosbrew/tvclean/lib"
+[ -f "$TVC_LIB/common.sh" ] || exit 0
+. "$TVC_LIB/common.sh"
+. "$TVC_LIB/apps.sh"
+load_conf
+apply_hide
+exit 0

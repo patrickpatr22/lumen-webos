@@ -1,0 +1,37 @@
+#!/bin/sh
+# tvclean: Source-Taste.
+#  - Standard: direkt ins Lumen-Hauptmenü (Eingänge bzw. Apps, je nach Einstellung in Lumen).
+#  - Ist in Lumen „Source-Taste: Leiste über dem Bild“ gewählt (Datei leiste.on) und läuft
+#    gerade eine App oder ein HDMI-Eingang, öffnet sich stattdessen die „Lumen Leiste“: eine
+#    kleine App mit Fenstertyp „overlay“, die über dem laufenden Bild liegt.
+# Gedacht für die Tastenbelegung (LG Input Hook → Execute):  sh /home/root/go-inputs
+TVC_LIB="${TVC_ROOT:-}/var/lib/webosbrew/tvclean/lib"
+. "$TVC_LIB/common.sh"
+load_conf
+[ -n "$LAUNCHER_ID" ] || exit 0
+
+DATA="${TVC_ROOT:-}/var/lib/webosbrew/lumen"
+BAR_ID="${BAR_ID:-de.lumenhome.leiste}"
+
+if [ -f "$DATA/leiste.on" ]; then
+    TMO=""
+    if command -v timeout >/dev/null 2>&1 && timeout 2 true 2>/dev/null; then
+        TMO="timeout 2"
+    fi
+    # shellcheck disable=SC2086
+    FG=$($TMO luna-send -n 1 luna://com.webos.applicationManager/getForegroundAppInfo '{}' 2>/dev/null \
+        | sed -n 's/.*"appId"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)
+    is_valid_id "$FG" || FG=""
+    case $FG in
+        ""|"$LAUNCHER_ID"|com.webos.app.home*) ;;
+        *)
+            if app_dir_of "$BAR_ID" luna >/dev/null 2>&1; then
+                exec luna-send -n 1 luna://com.webos.applicationManager/launch \
+                    "{\"id\":\"$BAR_ID\",\"params\":{\"from\":\"$FG\"}}" >/dev/null 2>&1
+            fi
+            ;;
+    esac
+fi
+
+exec luna-send -n 1 luna://com.webos.applicationManager/launch \
+    "{\"id\":\"$LAUNCHER_ID\",\"params\":{\"focus\":\"inputs\",\"key\":\"source\"}}" >/dev/null 2>&1

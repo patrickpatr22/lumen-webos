@@ -1,0 +1,25 @@
+#!/bin/sh
+# tvclean: Einstellungen-Taste → Lumen-Schnelleinstellungen (Seitenleiste über dem Bild).
+# Öffnet die „Lumen Leiste“ im Modus „settings“. Sie liegt als overlay-Fenster über der
+# laufenden App bzw. dem HDMI-Eingang. Fehlt sie, öffnen sich die normalen TV-Einstellungen.
+# Gedacht für die Tastenbelegung (LG Input Hook → Execute):  sh /home/root/go-settings
+TVC_LIB="${TVC_ROOT:-}/var/lib/webosbrew/tvclean/lib"
+. "$TVC_LIB/common.sh"
+load_conf
+
+BAR_ID="${BAR_ID:-de.lumenhome.leiste}"
+
+TMO=""
+if command -v timeout >/dev/null 2>&1 && timeout 2 true 2>/dev/null; then
+    TMO="timeout 2"
+fi
+# shellcheck disable=SC2086
+FG=$($TMO luna-send -n 1 luna://com.webos.applicationManager/getForegroundAppInfo '{}' 2>/dev/null \
+    | sed -n 's/.*"appId"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)
+is_valid_id "$FG" || FG=""
+
+if app_dir_of "$BAR_ID" luna >/dev/null 2>&1; then
+    exec luna-send -n 1 luna://com.webos.applicationManager/launch \
+        "{\"id\":\"$BAR_ID\",\"params\":{\"mode\":\"settings\",\"from\":\"$FG\"}}" >/dev/null 2>&1
+fi
+exec luna-send -n 1 luna://com.webos.applicationManager/launch '{"id":"com.palm.app.settings"}' >/dev/null 2>&1

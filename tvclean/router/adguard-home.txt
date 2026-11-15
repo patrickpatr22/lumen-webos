@@ -1,0 +1,50 @@
+! tvclean – DNS-Sperrliste für LG webOS im Router
+! Für AdGuard Home (Filter → Eigene Filterregeln) oder als Adlist in
+! Pi-hole-Versionen, die dieses Format verstehen.
+! Vorteil gegenüber /etc/hosts auf dem TV: sperrt auch alle Subdomains und
+! übersteht einen Werksreset des Fernsehers.
+!
+! Standard: Werbung, Tracking, KI-Plattform, ThinQ-Cloud, Firmware-Updates.
+! Content Store, App-Updates und Sprachsuche bleiben funktionsfähig.
+
+||lgsmartad.com^
+||lgad.cjpowercast.com^
+||lgtviot.com^
+||lgthinq.com^
+||lggalleryplus.com^
+||tv.wiselg.com^
+||ibs.nextlgsdp.com^
+||ibsstat.nextlgsdp.com^
+||rdx2.nextlgsdp.com^
+||homeprv.lgtvcommon.com^
+||recommend.lgtvcommon.com^
+||nudge.lgtvcommon.com^
+||cdpsvc.lgtvcommon.com^
+||cdpbeacon.lgtvcommon.com^
+||rdl.lgtvcommon.com^
+||qcardservice.lgtvcommon.com^
+||ngfts.lge.com^
+||qt2-ngfts.lge.com^
+||kic-ngfts.lge.com^
+||kic-qt2-ngfts.lge.com^
+||snu.lge.com^
+||su.lge.com^
+||su-ssl.lge.com^
+||nsu.lge.com^
+||snu-dev.lge.com^
+||su-dev.lge.com^
+
+! --- Optional, mit Nebenwirkungen: zum Aktivieren das "! " am Zeilenanfang entfernen ---
+! ||lgtvcommon.com^
+!   (alles von lgtvcommon.com – kann einzelne Dienste/Logins stören)
+! ||nextlgsdp.com^
+!   (bricht bei manchen Modellen den Content Store)
+! ||lgtvsdp.com^
+!   (bricht Content Store und App-Updates)
+! ||lgappstv.com^
+!   (bricht Content Store und App-Updates)
+! ||lgsmartweb.com^
+!   (bricht die Sprachsuche)
+!
+! Zusätzlich in der Router-Firewall sperren (per Hostname nicht erfassbar):
+!   156.147.69.32  – fest eingetragener Ersatz-Server für Firmware-Updates

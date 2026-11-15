@@ -1,0 +1,12 @@
+#!/bin/sh
+# tvclean: Home-Wächter starten – wenn webOS seinen Home-Screen zeigt,
+# wird stattdessen der eigene Launcher (LAUNCHER_ID) geöffnet.
+TVC_TAG=boot-homewatch
+TVC_LIB="${TVC_ROOT:-}/var/lib/webosbrew/tvclean/lib"
+[ -f "$TVC_LIB/common.sh" ] || exit 0
+. "$TVC_LIB/common.sh"
+. "$TVC_LIB/homewatch.sh"
+load_conf
+rm -f "$TVC_HW_PID"   # direkt nach dem Booten läuft sicher noch kein Wächter
+homewatch_start
+exit 0

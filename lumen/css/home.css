@@ -1,0 +1,349 @@
+/*
+ * Lumen – Startseite: Titel mit Eigenschaft, Vorschaukarte (leicht gekippte Glasplatte),
+ * App-Dock, Eingänge.
+ *
+ * Tempo: --tk (App-Reihe, Titel) und --ck (Vorschaukarte) sind Zeitfaktoren, die
+ * main.js aus den Reglern unter „Animationen“ setzt (1 = normal, 1,25 = 80 % Tempo).
+ */
+
+/* ---------- Titel links ---------- */
+#hero { position: absolute; left: var(--pad-x); top: 284px; width: 990px; }
+#hero-title {
+  margin: 0;
+  padding-bottom: 8px;
+  font-size: 152px;
+  font-weight: 700;
+  letter-spacing: -4.8px;
+  line-height: 1.02;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  will-change: transform, opacity;
+}
+/* Eigenschaft unter dem Namen („Video“, „Musik“ …) */
+#hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  height: 48px;
+  margin-top: 16px;
+  padding: 0 24px 0 20px;
+  border-radius: 999px;
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.075);
+  box-shadow: inset 1px 1px 0.5px rgba(255, 255, 255, 0.24), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  will-change: transform, opacity;
+}
+#hero-tag i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent, #8ab4ff);
+  box-shadow: 0 0 12px var(--accent, #8ab4ff);
+}
+#hero-tag.empty { visibility: hidden; }
+
+/* ---------- Vorschaukarte rechts ---------- */
+/* Alles, was zur Karte gehört (Rahmen, Kante, Schatten, Bild, Glanz), liegt in .art-card
+   auf einer einzigen Grafikebene: beim Einfliegen bewegt sich alles gemeinsam, und der
+   Grafikchip schiebt nur eine fertige Fläche herum. */
+#art {
+  position: absolute;
+  right: 128px;
+  top: 158px;
+  width: 640px;
+  height: 384px;
+  perspective: 1400px;
+  perspective-origin: 30% 55%;
+}
+/* Träger fürs „Atmen“: eigene Ebene, damit die Neigung (JS, Zeiger) unberührt bleibt */
+.art-float { position: absolute; inset: 0; transform-style: preserve-3d; will-change: transform; }
+.art-tilt {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(-15deg) rotateX(4deg);
+  transition: transform calc(600ms * var(--ck, 1)) var(--ease);
+  will-change: transform;
+}
+.art-card {
+  position: absolute;
+  inset: 0;
+  border-radius: 40px;
+  /* gläserner Rahmen: oben links hell, unten rechts gedämpft */
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.46), rgba(214, 222, 255, 0.17) 34%,
+    rgba(140, 152, 205, 0.12) 64%, rgba(255, 255, 255, 0.26));
+  box-shadow:
+    6px 5px 0 -1px rgba(132, 144, 196, 0.50),      /* Kante rechts/unten = Dicke der Platte */
+    7px 7px 0 0 rgba(6, 8, 16, 0.32),
+    24px 36px 58px rgba(0, 0, 0, 0.44),
+    0 8px 22px rgba(0, 0, 0, 0.22);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+.art-face {
+  position: absolute;
+  inset: 6px;
+  border-radius: 34px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05));
+}
+.art-face .art-icon { width: 200px; height: 200px; object-fit: contain; }
+.art-face svg {
+  width: 168px;
+  height: 168px;
+  stroke: rgba(255, 255, 255, 0.94);
+  fill: none;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.art-face .art-letter { font-size: 168px; font-weight: 700; color: rgba(255, 255, 255, 0.92); }
+/* Bildschirm-Vorschau bzw. eigenes Bild */
+.art-shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.art-shot.xf { opacity: 0; transition: opacity 650ms ease; }
+.art-shot.xf.in { opacity: 1; }
+.art-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: transparent; }
+.art-gloss {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 70% at 24% -12%, rgba(255, 255, 255, 0.30), rgba(255, 255, 255, 0) 56%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.14), rgba(0, 0, 0, 0) 40%);
+  box-shadow:
+    inset 1.5px 1.5px 0.5px rgba(255, 255, 255, 0.80),
+    inset -1px -1px 0.5px rgba(255, 255, 255, 0.28);
+}
+#art.shot .art-gloss {
+  background: radial-gradient(120% 70% at 24% -12%, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 52%);
+}
+/* HDMI live: Karte flach (das Videobild liegt auf einer eigenen Hardware-Ebene) */
+#art.live .art-tilt { transform: none !important; animation: none !important; }
+#art.live .art-float { animation: none !important; transform: none; }
+
+/* ---------- Reihen ---------- */
+#rows { position: absolute; left: 0; right: 0; top: 586px; }
+.row-label {
+  margin: 0 var(--pad-x) 12px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.viewport { position: relative; }
+.track {
+  position: relative;
+  display: flex;
+  gap: var(--gap);
+  transition: transform calc(380ms * var(--tk, 1)) var(--ease);
+  will-change: transform;
+}
+.track.instant { transition: none; }
+
+.dock { position: relative; margin: 0 calc(var(--pad-x) - var(--dock-pad)); }
+.dock-bg { position: absolute; inset: 0; border-radius: 50px; }
+/* nur seitlich abschneiden (Nachbarkacheln unsichtbar); nach oben/unten darf die gewählte
+   Kachel samt Ring und Schein frei herausragen */
+.dock .viewport { overflow: visible; clip-path: inset(-90px 0 -90px 0); padding: 34px var(--dock-pad) 46px; }
+
+/* ---------- App-Kachel ---------- */
+.tile { position: relative; flex: 0 0 var(--tile-w); perspective: 900px; }
+/* farbiger Schein unter der Auswahl (wie bei witty-deer-12, ohne teuren Weichzeichner) */
+.tile-glow {
+  position: absolute;
+  left: -26px;
+  right: -26px;
+  top: 10px;
+  height: var(--tile-h);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(var(--tc, 120, 140, 255), 0.62), rgba(var(--tc, 120, 140, 255), 0));
+  opacity: 0;
+  transform: translateY(10px) scale(0.86);
+  transition: opacity calc(340ms * var(--tk, 1)) ease, transform calc(460ms * var(--tk, 1)) var(--ease);
+  pointer-events: none;
+}
+.tile.is-focused .tile-glow { opacity: 1; transform: translateY(22px) scale(1.06); }
+/* Zeiger der Magic Remote: Kacheln richten sich aus (transform setzt home.js) */
+.tile-mag {
+  position: relative;
+  transition: transform 700ms var(--ease);
+}
+.tile-mag.m { transition-duration: 140ms; transition-timing-function: ease-out; }
+.tile-face {
+  position: relative;
+  width: var(--tile-w);
+  height: var(--tile-h);
+  border-radius: var(--tile-r);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(150deg, #2b3140, #151922);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.42);
+  transform: scale(0.92);           /* nicht gewählt: etwas kleiner, die Auswahl hebt sich ab */
+  transition: transform calc(300ms * var(--tk, 1)) var(--ease);
+  will-change: transform;
+}
+.tile-icon { width: 124px; height: 124px; object-fit: contain; opacity: 0; transition: opacity 260ms ease; }
+.tile-icon.ready { opacity: 1; }
+/* Undurchsichtige Symbole an den Rändern weich in die Kachelfarbe auslaufen lassen */
+.tile-icon.opaque, .art-face img.opaque {
+  -webkit-mask-image:
+    linear-gradient(90deg, transparent 0%, #000 14%, #000 86%, transparent 100%),
+    linear-gradient(180deg, transparent 0%, #000 14%, #000 86%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(90deg, transparent 0%, #000 14%, #000 86%, transparent 100%),
+    linear-gradient(180deg, transparent 0%, #000 14%, #000 86%, transparent 100%);
+  mask-composite: intersect;
+}
+.tile-letter { font-size: 70px; font-weight: 700; letter-spacing: -2px; color: rgba(255, 255, 255, 0.92); }
+.tile-gloss {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(130% 85% at 28% -25%, rgba(255, 255, 255, 0.40), rgba(255, 255, 255, 0) 56%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0) 42%);
+  box-shadow:
+    inset 1.5px 1.5px 0.5px rgba(255, 255, 255, 0.50),
+    inset -1px -1px 0.5px rgba(255, 255, 255, 0.16),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.tile-ring {
+  position: absolute;
+  inset: -5px;
+  border-radius: calc(var(--tile-r) + 5px);
+  border: 3px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.22);
+  opacity: 0;
+  transition: opacity calc(200ms * var(--tk, 1)) ease;
+  pointer-events: none;
+  will-change: opacity;
+}
+.tile-label {
+  position: absolute;
+  left: -20px;
+  right: -20px;
+  top: calc(var(--tile-h) + 16px);
+  text-align: center;
+  font-size: 22px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transition: opacity calc(240ms * var(--tk, 1)) ease;
+  will-change: opacity;
+}
+.tile.is-focused .tile-face { transform: scale(1.07) translateY(-4px); }
+.tile.is-focused .tile-ring { opacity: 1; }
+.tile.is-focused .tile-label { opacity: 1; }
+
+.tile.skeleton .tile-face {
+  background: linear-gradient(110deg, rgba(255, 255, 255, 0.05) 30%, rgba(255, 255, 255, 0.11) 50%, rgba(255, 255, 255, 0.05) 70%);
+  background-size: 300% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: -200% 0; } }
+
+/* ---------- Eingänge & Aktionen ---------- */
+#row-inputs { margin-top: 20px; }
+#row-inputs .viewport { margin: 0 var(--pad-x); }
+#row-inputs .track { gap: 20px; }
+.chip-sep {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 2px;
+  height: 54px;
+  margin: 0 auto;                 /* sitzt mittig in der Lücke und schiebt die Aktionen nach rechts */
+  border-radius: 1px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.30) 30%, rgba(255, 255, 255, 0.30) 70%, rgba(255, 255, 255, 0));
+}
+.chip {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 208px;
+  height: 86px;
+  padding: 0 27px 0 23px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-radius: 999px;
+  background:
+    radial-gradient(120% 100% at 50% -40%, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0) 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05));
+  box-shadow:
+    inset 1.5px 1.5px 0.5px rgba(255, 255, 255, 0.45),
+    inset -1px -1px 0.5px rgba(255, 255, 255, 0.14),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 14px 30px rgba(0, 0, 0, 0.30);
+  transition: transform calc(220ms * var(--tk, 1)) var(--ease);
+  will-change: transform;
+}
+.chip svg {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: rgba(255, 255, 255, 0.94);
+}
+.chip-text { display: flex; flex-direction: column; min-width: 0; }
+.chip-title { font-size: 23.5px; font-weight: 600; white-space: nowrap; }
+.chip-sub { margin-top: 2px; font-size: 16px; font-weight: 500; color: var(--text-3); white-space: nowrap; }
+.chip-dot {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.20);            /* nicht verbunden: grau */
+}
+.chip-dot.on { background: #4ade80; box-shadow: 0 0 10px rgba(74, 222, 128, 0.75); }
+.chip.is-focused {
+  background: linear-gradient(180deg, #ffffff, #e9ecf3);
+  box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.08), 0 18px 36px rgba(0, 0, 0, 0.40);
+  color: #0b0d12;
+  transform: scale(1.07);
+}
+.chip.is-focused svg { color: #0b0d12; }
+.chip.is-focused .chip-sub { color: rgba(11, 13, 18, 0.55); }
+.chip.is-focused .chip-dot { background: rgba(11, 13, 18, 0.20); }
+.chip.is-focused .chip-dot.on { background: #16a34a; box-shadow: none; }
+
+/* ---------- Hilfslinien (strukturierter Aufbau) ---------- */
+#guides { position: fixed; inset: 0; pointer-events: none; }
+#guides .g {
+  position: absolute;
+  left: var(--pad-x);
+  right: var(--pad-x);
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.34) 10%, rgba(255, 255, 255, 0.34) 90%, rgba(255, 255, 255, 0));
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  opacity: 0;
+}
+#guides .g::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: -6px;
+  width: 1px;
+  height: 13px;
+  background: rgba(255, 255, 255, 0.45);
+}
+#guides .g1 { top: 130px; }
+#guides .g2 { top: 622px; }
+#guides .g3 { top: 904px; }

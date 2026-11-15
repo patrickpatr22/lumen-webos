@@ -1,0 +1,58 @@
+LUMEN FÜR LG-FERNSEHER – ANLEITUNG
+==================================
+
+Lumen ersetzt den webOS-Startbildschirm durch ein eigenes Hauptmenü. Dazu gehören die
+„Lumen Leiste“ (Eingänge und offene Apps über dem laufenden Bild, Schnelleinstellungen)
+und „tvclean“ (Werbung und Tracking sperren, Lumen statt webOS-Home starten).
+
+
+VORAUSSETZUNGEN
+---------------
+1. Der Fernseher ist GEROOTET und der HOMEBREW CHANNEL ist installiert.
+   Ob und wie das geht, hängt von Modell und Firmware ab – siehe https://www.webosbrew.org
+   Ohne Root funktioniert Lumen nicht.
+2. Im Homebrew Channel → Einstellungen:  „Root status: ok“  und  „SSH Server“ einschalten.
+3. Ein Windows-PC im selben Netz wie der Fernseher.
+
+
+INSTALLIEREN
+------------
+1. Diesen Ordner entpacken (nicht aus dem ZIP heraus starten).
+2. „Lumen-Installer.exe“ doppelklicken.
+3. „Neuer Fernseher – Komplettinstallation“ ist ausgewählt, die drei Pakete stehen schon in
+   der Liste.
+4. „Fernseher suchen“ klicken oder die IP-Adresse eintippen
+   (am Fernseher: Einstellungen → Netzwerk).
+5. „Auf den Fernseher installieren“ klicken. Im schwarzen Fenster zweimal das Root-Passwort
+   eingeben (Standard: alpine). Beim Tippen erscheinen keine Zeichen – das ist normal.
+6. Der Fernseher startet danach von selbst neu.
+
+
+DANACH AM FERNSEHER
+-------------------
+1. Einstellungen → Allgemein → System → Zusätzliche Einstellungen → Home-Einstellungen →
+   Einschaltbildschirm: „Home“. Dann startet der Fernseher direkt in Lumen.
+   (Die Menünamen können je nach Firmware leicht abweichen.)
+2. „LG Input Hook“ aus dem Homebrew Channel installieren und Tasten belegen:
+      Home-Taste                ->  sh /home/root/go-home
+      Eingänge (Source)         ->  sh /home/root/go-inputs
+      Einstellungen (Zahnrad)   ->  sh /home/root/go-settings
+3. In Lumen unter „Anpassen“: deinen Namen für die Begrüßung, Source-Taste →
+   „Leiste über dem Bild“, Hintergrund, Licht (WLED) falls vorhanden.
+   Unter „Web-Backend“ lässt sich Lumen auch am Handy/PC einstellen.
+
+
+WICHTIG
+-------
+- Keine Firmware-Updates installieren (tvclean sperrt sie). Ein Update kann den Root-Zugang
+  entfernen.
+- Die LG-Developer-Mode-App nicht installieren, solange der Fernseher gerootet ist.
+- Spätere Updates: mit demselben Installer, Art „Update“.
+
+
+ENTFERNEN
+---------
+Lumen und Lumen Leiste im Homebrew Channel deinstallieren. tvclean per SSH entfernen:
+    ssh root@<IP-des-Fernsehers>
+    sh /var/lib/webosbrew/tvclean/tvclean.sh uninstall
+    reboot

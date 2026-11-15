@@ -1,0 +1,11 @@
+# tvclean – ThinQ-/IoT-Cloud (BLOCK_THINQ=1)
+lgtviot.com
+api.lgtviot.com
+commonpush.lgtviot.com
+sports.lgtviot.com
+ocp.lgtviot.com
+push.lgtviot.com
+buddy.lgtviot.com
+lgthinq.com
+common.lgthinq.com
+connect-client.lgthinq.com

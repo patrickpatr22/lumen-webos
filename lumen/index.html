@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Lumen</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/home.css">
+  <link rel="stylesheet" href="css/motion.css">
+  <link rel="stylesheet" href="css/settings.css">
+  <link rel="stylesheet" href="css/boot.css">
+</head>
+<body data-theme="glas">
+  <!-- Hintergrund: Licht in der Farbe der Auswahl -->
+  <div id="bg">
+    <canvas class="amb" width="192" height="108"></canvas>
+    <canvas class="amb" width="192" height="108"></canvas>
+    <div class="shade"></div>
+    <div id="plight"></div>
+  </div>
+
+  <!-- Hilfslinien beim strukturierten Aufbau -->
+  <div id="guides"><i class="g g1"></i><i class="g g2"></i><i class="g g3"></i></div>
+
+  <header id="top">
+    <div id="greet"></div>
+    <div id="time" class="glass"><span id="clock"></span><span id="date"></span></div>
+  </header>
+
+  <section id="hero">
+    <h1 id="hero-title"></h1>
+    <div id="hero-tag"><i></i><span></span></div>
+  </section>
+
+  <!-- Vorschaukarte: leicht gekippte Glasplatte (Kante, Schatten und Inhalt auf einer Ebene,
+       damit beim Einfliegen alles zusammen bleibt) -->
+  <div id="art">
+    <div class="art-float">
+    <div class="art-tilt">
+      <div class="art-card">
+        <div class="art-face"></div>
+        <div class="art-gloss"></div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <main id="rows">
+    <section id="row-apps">
+      <div class="row-label">Apps</div>
+      <div class="dock">
+        <div class="dock-bg glass"></div>
+        <div class="viewport"><div class="track"></div></div>
+      </div>
+    </section>
+    <section id="row-inputs">
+      <div class="row-label">Eingänge</div>
+      <div class="viewport"><div class="track"></div></div>
+    </section>
+  </main>
+
+  <!-- Einstellungen -->
+  <div id="settings" hidden>
+    <div class="set-panel">
+      <aside class="set-side">
+        <div class="set-brand">
+          <div class="set-logo"></div>
+          <div><div class="set-name">Anpassen</div><div class="set-ver"></div></div>
+        </div>
+        <div class="set-cats"></div>
+      </aside>
+      <section class="set-main">
+        <header class="set-header">
+          <div class="set-crumb"></div>
+          <h2 class="set-title"></h2>
+          <div class="set-sub"></div>
+        </header>
+        <div class="set-scroll"><div class="set-list"></div></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Kontextmenü (Kachel lange drücken) -->
+  <div id="sheet" hidden>
+    <div class="sheet-card">
+      <div class="sheet-title"></div>
+      <div class="sheet-sub"></div>
+      <div class="sheet-list"></div>
+    </div>
+  </div>
+
+  <!-- Dropdown im iOS-Stil -->
+  <div id="pop" hidden><div class="pop-list"></div></div>
+
+  <!-- Texteingabe -->
+  <div id="prompt" hidden>
+    <div class="prompt-card">
+      <div class="prompt-title"></div>
+      <div class="prompt-sub"></div>
+      <input id="prompt-input" type="text" autocomplete="off" spellcheck="false">
+      <div class="prompt-btns"><div class="prompt-btn primary">Speichern</div><div class="prompt-btn">Abbrechen</div></div>
+    </div>
+  </div>
+
+  <div id="saver" hidden><div id="saver-clock"></div></div>
+
+  <!-- Start-Animation: Lichtspalt → Lichtstreifen laufen zusammen → Orb verdichtet sich zum
+       Lichtpunkt des Logos → Zündung (Blitz, Druckwelle, Strahlen) → Schriftzug → Flug durch
+       den Lichtpunkt in die Startseite. Solange Lumen noch lädt, ruht das Logo und pulsiert. -->
+  <div id="boot" class="pending">
+    <div class="boot-bg"></div>
+    <div class="boot-rays"></div>
+    <div class="boot-vignette"></div>
+    <div class="boot-slit"></div>
+    <div class="boot-flash"></div>
+    <div class="boot-stage">
+      <div class="boot-mark">
+        <div class="boot-sparks"><i style="--a:8deg;--d:0ms;--r:700px"></i><i style="--a:33deg;--d:90ms;--r:620px"></i><i style="--a:61deg;--d:40ms;--r:760px"></i><i style="--a:88deg;--d:150ms;--r:660px"></i><i style="--a:117deg;--d:60ms;--r:720px"></i><i style="--a:142deg;--d:180ms;--r:600px"></i><i style="--a:171deg;--d:20ms;--r:740px"></i><i style="--a:196deg;--d:120ms;--r:680px"></i><i style="--a:224deg;--d:70ms;--r:760px"></i><i style="--a:251deg;--d:200ms;--r:620px"></i><i style="--a:279deg;--d:30ms;--r:700px"></i><i style="--a:306deg;--d:140ms;--r:660px"></i><i style="--a:333deg;--d:90ms;--r:740px"></i><i style="--a:352deg;--d:170ms;--r:600px"></i></div>
+        <div class="boot-orbit"><div class="boot-orb o-a"></div><div class="boot-orb o-b"></div><div class="boot-core"></div></div>
+        <div class="boot-zoom">
+          <svg class="boot-svg" viewBox="0 0 120 120" aria-hidden="true">
+            <defs>
+              <linearGradient id="bT" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#34405f"/><stop offset="1" stop-color="#0b0f1a"/></linearGradient>
+              <linearGradient id="bL" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#c9d4ff"/></linearGradient>
+              <radialGradient id="bH" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffffff" stop-opacity=".95"/><stop offset=".35" stop-color="#bfe3ff" stop-opacity=".55"/><stop offset="1" stop-color="#8a7dff" stop-opacity="0"/></radialGradient>
+              <linearGradient id="bS" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+              <clipPath id="bC"><rect x="6" y="6" width="108" height="108" rx="32"/></clipPath>
+            </defs>
+            <rect class="b-fill" x="6" y="6" width="108" height="108" rx="32" fill="url(#bT)"/>
+            <g clip-path="url(#bC)"><rect class="b-sheen" x="-50" y="-30" width="34" height="180" fill="url(#bS)"/></g>
+            <rect class="b-edge" x="6.75" y="6.75" width="106.5" height="106.5" rx="31.25" pathLength="1" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.5"/>
+            <circle class="b-halo" cx="82" cy="38" r="26" fill="url(#bH)"/>
+            <path class="b-l" d="M40 30v42a14 14 0 0 0 14 14h32" pathLength="1" fill="none" stroke="url(#bL)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle class="b-dot" cx="82" cy="38" r="8.5" fill="#fff"/>
+          </svg>
+          <div class="boot-glow"></div>
+        </div>
+        <div class="boot-wave"></div><div class="boot-wave w2"></div>
+      </div>
+      <div class="boot-word"><span>L</span><span>U</span><span>M</span><span>E</span><span>N</span></div>
+      <div class="boot-line"><i></i><b></b></div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="js/luna.js"></script>
+  <script src="js/quotes.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/bg.js"></script>
+  <script src="js/preview.js"></script>
+  <script src="js/greet.js"></script>
+  <script src="js/wled.js"></script>
+  <script src="js/anim.js"></script>
+  <script src="js/home.js"></script>
+  <script src="js/bar.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/backend.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

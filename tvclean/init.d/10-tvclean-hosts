@@ -1,0 +1,11 @@
+#!/bin/sh
+# tvclean: Werbe-, Tracking- und Update-Server per /etc/hosts sperren.
+# Wird vom Homebrew Channel bei jedem Start ausgeführt.
+TVC_TAG=boot-hosts
+TVC_LIB="${TVC_ROOT:-}/var/lib/webosbrew/tvclean/lib"
+[ -f "$TVC_LIB/common.sh" ] || exit 0
+. "$TVC_LIB/common.sh"
+. "$TVC_LIB/hosts.sh"
+load_conf
+apply_hosts
+exit 0

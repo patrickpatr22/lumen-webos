@@ -1,0 +1,55 @@
+#!/bin/sh
+# tvclean: Home-Taste → Launcher, erste App.
+# Ist in Lumen „Vorschau → Automatisch aufnehmen“ an (Datei autoshot.on), wird vorher
+# ein kleines Bild der laufenden App aufgenommen. Lumen zeigt es als Vorschau.
+# Gedacht für die Tastenbelegung (LG Input Hook → Execute):  sh /home/root/go-home
+TVC_LIB="${TVC_ROOT:-}/var/lib/webosbrew/tvclean/lib"
+. "$TVC_LIB/common.sh"
+load_conf
+[ -n "$LAUNCHER_ID" ] || exit 0
+
+DATA="${TVC_ROOT:-}/var/lib/webosbrew/lumen"
+PARAMS='{"focus":"apps"}'
+
+if [ -f "$DATA/autoshot.on" ]; then
+    TMO=""
+    if command -v timeout >/dev/null 2>&1 && timeout 2 true 2>/dev/null; then
+        TMO="timeout 2"
+    fi
+    # shellcheck disable=SC2086
+    FG=$($TMO luna-send -n 1 luna://com.webos.applicationManager/getForegroundAppInfo '{}' 2>/dev/null \
+        | sed -n 's/.*"appId"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)
+    is_valid_id "$FG" || FG=""
+    case $FG in
+        ""|"$LAUNCHER_ID"|com.webos.app.home|com.webos.app.livetv*) ;;
+        *)
+            if [ ! -f "$DATA/shots/$FG.pin" ]; then
+                TMP="${TVC_TMP:-/tmp}/lumen-shot.jpg"
+                rm -f "$TMP"
+                # je nach webOS heißt der Dienst com.webos.service.capture oder …tv.capture
+                for SVC in com.webos.service.capture com.webos.service.tv.capture; do
+                    # shellcheck disable=SC2086
+                    $TMO luna-send -n 1 "luna://$SVC/executeOneShot" \
+                        "{\"path\":\"$TMP\",\"method\":\"DISPLAY\",\"format\":\"JPG\",\"width\":640,\"height\":360}" \
+                        >/dev/null 2>&1
+                    [ -s "$TMP" ] && break
+                done
+                SIZE=0
+                [ -s "$TMP" ] && SIZE=$(wc -c < "$TMP" 2>/dev/null | tr -d ' ')
+                # Fast leere Bilder (kopiergeschützte Inhalte bleiben schwarz) nicht übernehmen
+                if [ "${SIZE:-0}" -ge "${SHOT_MIN_BYTES:-7000}" ] 2>/dev/null; then
+                    mkdir -p "$DATA/shots" && cp -f "$TMP" "$DATA/shots/$FG.jpg"
+                    DIR=$(app_dir_of "$LAUNCHER_ID" luna)
+                    if [ -n "$DIR" ]; then
+                        mkdir -p "$DIR/cache/shots" 2>/dev/null && cp -f "$TMP" "$DIR/cache/shots/$FG.jpg" 2>/dev/null
+                    fi
+                    PARAMS="{\"focus\":\"apps\",\"shot\":\"$FG\",\"t\":\"$(date +%s 2>/dev/null)\"}"
+                fi
+                rm -f "$TMP"
+            fi
+            ;;
+    esac
+fi
+
+exec luna-send -n 1 luna://com.webos.applicationManager/launch \
+    "{\"id\":\"$LAUNCHER_ID\",\"params\":$PARAMS}" >/dev/null 2>&1

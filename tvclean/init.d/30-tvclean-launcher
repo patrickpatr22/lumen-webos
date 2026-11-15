@@ -1,0 +1,17 @@
+#!/bin/sh
+# tvclean: Launcher als TV-Eingang registrieren, damit der TV direkt darin startet.
+# Die Registrierung läuft im Hintergrund weiter, bis der eim-Dienst bereit ist,
+# damit der Bootvorgang nicht aufgehalten wird.
+TVC_TAG=boot-launcher
+TVC_LIB="${TVC_ROOT:-}/var/lib/webosbrew/tvclean/lib"
+[ -f "$TVC_LIB/common.sh" ] || exit 0
+. "$TVC_LIB/common.sh"
+. "$TVC_LIB/launcher.sh"
+load_conf
+[ -n "$LAUNCHER_ID" ] || exit 0
+# Nur wenn ausdrücklich gewünscht: Launcher als TV-Eingang (erscheint dann unter „Quellen“).
+# Standard ist der Home-Wächter (40-tvclean-homewatch).
+[ "${LAUNCHER_AS_INPUT:-0}" = 1 ] || exit 0
+launcher_prepare
+( launcher_register "${TVC_REG_TRIES:-36}" "${TVC_REG_WAIT:-5}" ) </dev/null >/dev/null 2>&1 &
+exit 0

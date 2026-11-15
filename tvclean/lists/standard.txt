@@ -1,0 +1,50 @@
+# tvclean – Standard-Sperrliste (BLOCK_LG=1)
+# Genaue Hostnamen, da /etc/hosts keine Platzhalter kennt.
+# Bewusst NICHT gesperrt (würde Content Store / App-Updates / Sprachsuche brechen):
+#   lgtvsdp.com, lgappstv.com, nextlgsdp.com, lgsmartweb.com
+
+# --- Firmware-Updates (OTA) – ein Update würde den Root-Zugang entfernen ---
+snu.lge.com
+su.lge.com
+su-ssl.lge.com
+nsu.lge.com
+snu-dev.lge.com
+su-dev.lge.com
+
+# --- Werbung ---
+lgsmartad.com
+info.lgsmartad.com
+ad.lgsmartad.com
+us.ad.lgsmartad.com
+us.info.lgsmartad.com
+# regionale Varianten (harmlos, falls es sie nicht gibt)
+eu.ad.lgsmartad.com
+eu.info.lgsmartad.com
+de.ad.lgsmartad.com
+de.info.lgsmartad.com
+lgad.cjpowercast.com
+
+# --- Nutzungsdaten / Telemetrie / Absturzberichte ---
+ibs.nextlgsdp.com
+ibsstat.nextlgsdp.com
+rdx2.nextlgsdp.com
+us.rdx2.lgtvsdp.com
+eu.rdx2.lgtvsdp.com
+de.rdx2.lgtvsdp.com
+lggalleryplus.com
+tv.wiselg.com
+
+# --- Startseiten-Werbung, Empfehlungen, Tracking-Beacons ---
+homeprv.lgtvcommon.com
+recommend.lgtvcommon.com
+nudge.lgtvcommon.com
+cdpsvc.lgtvcommon.com
+cdpbeacon.lgtvcommon.com
+rdl.lgtvcommon.com
+qcardservice.lgtvcommon.com
+
+# --- LG-KI-Plattform ---
+ngfts.lge.com
+qt2-ngfts.lge.com
+kic-ngfts.lge.com
+kic-qt2-ngfts.lge.com
